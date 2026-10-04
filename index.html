@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>留言板</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"Microsoft YaHei",sans-serif;background:#f0f2f5;color:#333;padding:20px 0}
+.container{max-width:700px;margin:0 auto;padding:0 16px}
+.header{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:20px 30px;border-radius:16px;display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;box-shadow:0 8px 24px rgba(102,126,234,.3)}
+.header h2{font-size:22px}
+.header a{color:#fff;text-decoration:none;background:rgba(255,255,255,.2);padding:6px 16px;border-radius:20px;font-size:14px}
+.auth-box{background:#fff;padding:40px;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.12);max-width:400px;margin:40px auto}
+.auth-box h2{text-align:center;margin-bottom:24px}
+.form-group{margin-bottom:18px}
+.form-group label{display:block;margin-bottom:6px;color:#555;font-size:14px}
+.form-group input{width:100%;padding:12px 14px;border:2px solid #e0e0e0;border-radius:8px;font-size:15px}
+.form-group input:focus{outline:none;border-color:#667eea}
+.btn{width:100%;padding:12px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:8px;font-size:16px;cursor:pointer}
+.link{text-align:center;margin-top:16px;font-size:14px}
+.link a{color:#667eea}
+.alert{padding:10px 14px;border-radius:8px;margin-bottom:16px;font-size:14px}
+.alert.error{background:#f8d7da;color:#721c24}
+.alert.success{background:#d4edda;color:#155724}
+.post-box{background:#fff;padding:24px;border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,.06);margin-bottom:24px}
+.post-box textarea{width:100%;min-height:80px;padding:14px;border:2px solid #e8e8e8;border-radius:10px;font-size:15px;resize:vertical;font-family:inherit}
+.post-box button{margin-top:12px;float:right;padding:10px 28px;border:none;border-radius:8px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;cursor:pointer}
+.clear{clear:both}
+.msg-card{background:#fff;padding:20px 24px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.04);margin-bottom:14px;border:2px solid transparent}
+.msg-card:hover{border-color:#a8d4ff}
+.msg-meta{display:flex;align-items:center;margin-bottom:10px}
+.avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:bold;margin-right:12px}
+.msg-info{flex:1}
+.msg-info .name{font-weight:600}
+.msg-info .time{font-size:12px;color:#999;margin-top:2px}
+.msg-actions{display:flex;gap:6px}
+.btn-action{padding:4px 10px;border:1px solid #ddd;background:#f8f9fa;border-radius:4px;font-size:12px;cursor:pointer;color:#555;text-decoration:none}
+.btn-action:hover{background:#667eea;color:#fff;border-color:#667eea}
+.btn-delete:hover{background:#dc3545;border-color:#dc3545}
+.msg-content{white-space:pre-wrap;word-break:break-word;line-height:1.6;max-height:240px;overflow:auto}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;align-items:center;justify-content:center}
+.modal-overlay.active{display:flex}
+.modal-box{background:#fff;padding:32px 28px;border-radius:14px;max-width:380px;width:88%;text-align:center}
+.modal-box p{margin-bottom:24px}
+.modal-buttons{display:flex;gap:12px;justify-content:center}
+.modal-btn{padding:9px 28px;border:none;border-radius:8px;cursor:pointer}
+.modal-btn.primary{background:#667eea;color:#fff}
+.modal-btn.cancel{background:#e8e8e8;color:#555}
+.empty{text-align:center;color:#999;padding:60px 0}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div id="auth" class="auth-box hidden">
+    <div id="login-view">
+      <h2>🔐 用户登录</h2>
+      <div id="login-alert"></div>
+      <div class="form-group"><label>用户名</label><input id="login-user" autocomplete="username"></div>
+      <div class="form-group"><label>密码</label><input id="login-pass" type="password" autocomplete="current-password"></div>
+      <button class="btn" onclick="login()">登录</button>
+      <div class="link">没有账号？<a href="#" onclick="showReg()">去注册</a></div>
+    </div>
+    <div id="reg-view" class="hidden">
+      <h2>✍️ 用户注册</h2>
+      <div id="reg-alert"></div>
+      <div class="form-group"><label>用户名</label><input id="reg-user"></div>
+      <div class="form-group"><label>密码</label><input id="reg-pass" type="password"></div>
+      <button class="btn" onclick="register()">注册</button>
+      <div class="link">已有账号？<a href="#" onclick="showLogin()">去登录</a></div>
+    </div>
+  </div>
+
+  <div id="board" class="hidden">
+    <div class="header">
+      <h2>💬 留言板</h2>
+      <span>欢迎，<span id="uname"></span>！<a href="#" onclick="logout()">退出</a></span>
+    </div>
+
+    <div class="post-box">
+      <textarea id="content" placeholder="说点什么..."></textarea>
+      <button onclick="postMsg()">发布留言</button>
+      <div class="clear"></div>
+    </div>
+
+    <div id="list"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal-box">
+    <p id="modal-text"></p>
+    <div class="modal-buttons" id="modal-btns"></div>
+  </div>
+</div>
+
+<script>
+// ===== 新增：读取 URL 参数 ?user=xxx 自动预填用户名 =====
+(function(){
+  const params = new URLSearchParams(window.location.search);
+  const u = params.get('user');
+  if(u){
+    const loginInput = document.getElementById('login-user');
+    const regInput = document.getElementById('reg-user');
+    if(loginInput) loginInput.value = u;
+    if(regInput) regInput.value = u;
+  }
+})();
+
+function esc(s){return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
+function showLogin(){document.getElementById('login-view').classList.remove('hidden');document.getElementById('reg-view').classList.add('hidden');clearAlert()}
+function showReg(){document.getElementById('reg-view').classList.remove('hidden');document.getElementById('login-view').classList.add('hidden');clearAlert()}
+function clearAlert(){document.getElementById('login-alert').innerHTML='';document.getElementById('reg-alert').innerHTML=''}
+
+function alertBox(id,msg,type){document.getElementById(id).innerHTML='<div class="alert '+type+'">'+esc(msg)+'</div>'}
+
+async function register(){
+  const username=document.getElementById('reg-user').value.trim();
+  const password=document.getElementById('reg-pass').value;
+  const r=await fetch('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password})});
+  const d=await r.json().catch(()=>({}));
+  if(r.ok){alertBox('reg-alert','注册成功，请登录','success');setTimeout(showLogin,1200);}
+  else alertBox('reg-alert',d.message||'注册失败','error');
+}
+
+async function login(){
+  const username=document.getElementById('login-user').value.trim();
+  const password=document.getElementById('login-pass').value;
+  const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password})});
+  const d=await r.json().catch(()=>({}));
+  if(r.ok) location.reload();
+  else alertBox('login-alert',d.message||'登录失败','error');
+}
+
+async function logout(){
+  await fetch('/api/logout',{method:'POST'});
+  location.reload();
+}
+
+async function postMsg(){
+  const content=document.getElementById('content').value.trim();
+  if(!content){showModal('请输入留言内容');return;}
+  const r=await fetch('/api/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content})});
+  if(r.ok){document.getElementById('content').value='';load();}
+  else{const d=await r.json().catch(()=>({}));showModal(d.message||'发布失败');}
+}
+
+async function load(){
+  const r=await fetch('/api/messages');
+  if(!r.ok){showModal('加载留言失败（状态码：'+r.status+'）');return;}
+  const d=await r.json();
+  if(d.loggedIn){
+    document.getElementById('auth').classList.add('hidden');
+    document.getElementById('board').classList.remove('hidden');
+    document.getElementById('uname').innerText=d.username||'';
+    if(!d.messages.length){document.getElementById('list').innerHTML='<div class="empty">还没有留言，来做第一个吧！</div>';return;}
+    document.getElementById('list').innerHTML=d.messages.map(m=>{
+      const acts=['<button class="btn-action" onclick="selectAll('+m.id+')">全选</button>',
+                  '<button class="btn-action" onclick="copyMsg('+m.id+')">复制</button>'];
+      if(m.mine) acts.push('<button class="btn-action btn-delete" onclick="delMsg('+m.id+')">删除</button>');
+      return '<div class="msg-card"><div class="msg-meta"><div class="avatar">'+esc((m.username||'?').slice(0,1))+'</div>'+
+        '<div class="msg-info"><div class="name">'+esc(m.username)+'</div><div class="time">'+esc(m.created_at)+'</div></div>'+
+        '<div class="msg-actions">'+acts.join('')+'</div></div>'+
+        '<div class="msg-content" id="mc-'+m.id+'">'+esc(m.content)+'</div></div>';
+    }).join('');
+  }else{
+    document.getElementById('auth').classList.remove('hidden');
+    document.getElementById('board').classList.add('hidden');
+  }
+}
+
+function selectAll(id){const el=document.getElementById('mc-'+id);const rg=document.createRange();rg.selectNodeContents(el);const s=window.getSelection();s.removeAllRanges();s.addRange(rg);}
+function copyMsg(id){const el=document.getElementById('mc-'+id);navigator.clipboard.writeText(el.innerText).then(()=>showModal('复制成功'),()=>showModal('复制失败'));}
+function delMsg(id){showModal('确定要删除这条留言吗？',()=>fetch('/api/messages-delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})}).then(load));}
+
+let cb=null;
+function showModal(text,confirmCb){document.getElementById('modal-text').innerText=text;const b=document.getElementById('modal-btns');b.innerHTML='';
+  if(confirmCb){cb=confirmCb;b.innerHTML='<button class="modal-btn cancel" onclick="closeModal()">取消</button><button class="modal-btn primary" onclick="okModal()">确定</button>';}
+  else{b.innerHTML='<button class="modal-btn primary" onclick="closeModal()">确定</button>';}
+  document.getElementById('modal').classList.add('active');}
+function closeModal(){document.getElementById('modal').classList.remove('active');cb=null;}
+function okModal(){if(cb)cb();closeModal();}
+
+load();
+</script>
+</body>
+</html>
